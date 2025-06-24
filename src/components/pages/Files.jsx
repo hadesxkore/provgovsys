@@ -75,7 +75,8 @@ import {
   Search,
   Plus,
   CheckCircle2,
-  X
+  X,
+  User
 } from "lucide-react";
 import {
   Pagination,
@@ -813,33 +814,36 @@ export default function Files() {
       <Sheet open={isShareSheetOpen} onOpenChange={setIsShareSheetOpen}>
         <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
           <SheetHeader className="pb-6 border-b text-center">
-            <div className="flex justify-center mb-2">
-              <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
-                <Share2 className="h-6 w-6 text-blue-600" />
+            <div className="flex justify-center mb-3">
+              <div className="h-14 w-14 rounded-full bg-blue-100 flex items-center justify-center">
+                <Share2 className="h-7 w-7 text-blue-600" />
               </div>
             </div>
-            <SheetTitle className="text-xl font-semibold">Share File</SheetTitle>
+            <SheetTitle className="text-xl font-semibold mb-1">Share File</SheetTitle>
             <SheetDescription className="text-sm text-muted-foreground">
               Share "{selectedFile?.name}" with other users
             </SheetDescription>
           </SheetHeader>
 
-          <div className="py-6">
+          <div className="py-6 px-4">
             <div className="space-y-6">
-              <div className="flex flex-col items-center">
-                <label htmlFor="department" className="text-base font-medium text-gray-900 mb-2 self-start">
-                  Select Department
-                </label>
+              {/* Department Selection */}
+              <div className="space-y-3">
+                <div className="text-center">
+                  <label htmlFor="department" className="text-base font-semibold text-gray-900 block">
+                    Select Department
+                  </label>
+                </div>
                 <Select 
                   value={selectedDepartment} 
                   onValueChange={handleDepartmentChange}
                 >
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full h-10 text-base">
                     <SelectValue placeholder="Choose a department" />
                   </SelectTrigger>
                   <SelectContent className="w-full min-w-[300px]">
                     {departments.map((dept) => (
-                      <SelectItem key={dept.id} value={dept.name}>
+                      <SelectItem key={dept.id} value={dept.name} className="py-2">
                         {dept.name}
                       </SelectItem>
                     ))}
@@ -847,38 +851,56 @@ export default function Files() {
                 </Select>
               </div>
 
-              {selectedDepartment && departmentUsers.length > 0 && (
-                <div className="mt-6">
-                  <label className="text-base font-medium text-gray-900 mb-2 block">
-                    Select Users
+              {/* Users Selection */}
+              {departmentUsers.length > 0 && (
+                <div className="space-y-3">
+                  <label className="text-base font-semibold text-gray-900 block text-center">
+                    Select Users to Share With
                   </label>
-                  <div className="border rounded-lg overflow-hidden bg-white">
-                    <ScrollArea className="h-[200px]">
-                      <div className="p-4 space-y-3">
+                  <div className="border rounded-lg overflow-hidden">
+                    <ScrollArea className="h-[200px] p-3">
+                      <div className="space-y-2">
                         {departmentUsers.map((user) => (
-                          <div key={user.id} className="flex items-center space-x-3 p-2 rounded hover:bg-gray-50">
+                          <div
+                            key={user.id}
+                            className={`flex items-center space-x-3 p-2 rounded-lg transition-colors ${
+                              selectedUsers.includes(user.id)
+                                ? 'bg-blue-50 border border-blue-200'
+                                : 'hover:bg-gray-50 border border-transparent'
+                            }`}
+                          >
                             <Checkbox
                               id={user.id}
                               checked={selectedUsers.includes(user.id)}
-                              onCheckedChange={(checked) => handleUserSelection(user.id, checked)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedUsers([...selectedUsers, user.id]);
+                                } else {
+                                  setSelectedUsers(selectedUsers.filter((id) => id !== user.id));
+                                }
+                              }}
+                              className="h-4 w-4"
                             />
                             <label
                               htmlFor={user.id}
-                              className="text-sm text-gray-700 font-medium cursor-pointer"
+                              className="flex-1 flex items-center cursor-pointer"
                             >
-                              {user.email}
+                              <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center mr-2">
+                                <User className="h-4 w-4 text-gray-600" />
+                              </div>
+                              <div>
+                                <p className="font-medium text-gray-900 text-sm">{user.email}</p>
+                                <p className="text-xs text-gray-500">{user.department}</p>
+                              </div>
                             </label>
                           </div>
                         ))}
                       </div>
                     </ScrollArea>
                   </div>
-                </div>
-              )}
-
-              {selectedDepartment && departmentUsers.length === 0 && (
-                <div className="text-center py-4">
-                  <p className="text-sm text-gray-500">No users found in this department</p>
+                  <p className="text-xs text-gray-500 text-center">
+                    {selectedUsers.length} user{selectedUsers.length !== 1 ? 's' : ''} selected
+                  </p>
                 </div>
               )}
             </div>
@@ -891,14 +913,14 @@ export default function Files() {
                   setSelectedDepartment("");
                   setSelectedUsers([]);
                 }}
-                className="px-4"
+                className="px-4 h-9"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleShareSubmit}
                 disabled={!selectedUsers.length || isSharing}
-                className="px-4 bg-primary hover:bg-primary/90"
+                className="px-4 h-9 bg-primary hover:bg-primary/90"
               >
                 {isSharing ? (
                   <div className="flex items-center">
