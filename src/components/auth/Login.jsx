@@ -51,7 +51,7 @@ const Login = () => {
         <div className="relative z-10 h-full flex flex-col items-center justify-center p-16">
           <div className="w-40 h-40 mb-12 relative bg-white rounded-full p-6 shadow-lg">
             <img 
-              src="/images/logo.png" 
+              src={import.meta.env.BASE_URL + 'images/logo.png'}
               alt="Bataan Logo" 
               className="w-full h-full object-contain"
               onError={(e) => {

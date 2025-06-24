@@ -402,7 +402,7 @@ export default function Dashboard() {
               className="flex flex-col items-center gap-3"
             >
               <img 
-                src="/images/logo.png" 
+                src={import.meta.env.BASE_URL + 'images/logo.png'}
                 alt="Bataan Logo" 
                 className="h-16 w-16 object-contain"
               />
