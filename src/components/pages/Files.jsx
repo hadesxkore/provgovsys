@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { auth, db } from "../../config/firebase";
-import { collection, query, where, getDocs, deleteDoc, doc, addDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, deleteDoc, doc, addDoc, getDoc } from "firebase/firestore";
 import { format } from "date-fns";
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -87,6 +87,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "../ui/pagination"
+import emailjs from '@emailjs/browser';
 
 // Stats Card Component
 const StatsCard = ({ icon, title, value, description, gradient }) => (
@@ -170,6 +171,9 @@ export default function Files() {
   useEffect(() => {
     fetchFiles();
     fetchDepartments();
+    
+    // Initialize EmailJS
+    emailjs.init("YOUR_PUBLIC_KEY"); // Replace with your EmailJS public key
   }, []);
 
   const fetchFiles = async () => {
@@ -264,8 +268,17 @@ export default function Files() {
 
     setIsSharing(true);
     try {
-      const sharePromises = selectedUsers.map(userId => 
-        addDoc(collection(db, "shared_files"), {
+      // Get current user's email
+      const currentUserEmail = auth.currentUser.email;
+
+      // Get the current user's data to include department
+      const currentUserDoc = await getDoc(doc(db, "users", auth.currentUser.uid));
+      const currentUserData = currentUserDoc.exists() ? currentUserDoc.data() : {};
+
+      // Share files and send emails to each selected user
+      const sharePromises = selectedUsers.map(async userId => {
+        // First, share the file
+        const shareDoc = await addDoc(collection(db, "shared_files"), {
           fileId: selectedFile.id,
           fileName: selectedFile.name,
           fileUrl: selectedFile.url,
@@ -273,11 +286,35 @@ export default function Files() {
           sharedWith: userId,
           sharedAt: new Date().toISOString(),
           departmentId: selectedDepartment
-        })
-      );
+        });
+
+        // Get the recipient's user data
+        const userDoc = await getDoc(doc(db, "users", userId));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          
+          // Send email notification
+          await emailjs.send(
+            "service_287nkdg",
+            "template_10rpelb",
+            {
+              to_email: userData.email,
+              to_name: userData.displayName || userData.email,
+              from_name: currentUserEmail,
+              from_department: currentUserData.department || "Unspecified",
+              file_name: selectedFile.name,
+              message: `A new file has been shared with you: ${selectedFile.name}`,
+              department: selectedDepartment
+            },
+            "SCsg9WSjncPID55No"
+          );
+        }
+
+        return shareDoc;
+      });
 
       await Promise.all(sharePromises);
-      toast.success("File shared successfully");
+      toast.success("File shared successfully and notifications sent");
       setIsShareSheetOpen(false);
       setSelectedDepartment("");
       setSelectedUsers([]);

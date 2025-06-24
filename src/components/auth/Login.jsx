@@ -164,7 +164,7 @@ const Login = () => {
           </form>
 
           <div className="mt-8 text-center text-xs text-gray-500">
-            © 2024 Provincial Government of Bataan. All rights reserved.
+            © 2025 Provincial Government of Bataan. All rights reserved.
           </div>
         </div>
       </div>
